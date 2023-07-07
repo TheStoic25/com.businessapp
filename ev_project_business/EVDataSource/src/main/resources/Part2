@@ -1,0 +1,82 @@
+package com.ev;
+
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+/**
+ * Hello world!
+ *
+ */
+public class EVMain
+{
+    public static void main( String[] args )
+    {
+        String employeeData = """
+                Leo, dicaprio, 1/1/1990, Programmer, {hourlyPay = 100, totalHours = 110}
+                Brad, Harley, 1/1/1990, Programmer, {hourlyPay = 100, totalHours = 110}
+                Steve, Crawley, 2/2/1991, Programmer, {hourlyPay = 100, totalHours = 110}
+                Ayan, Benerjee, 4/4/1989, BusinessAnalyst, {clientCall = 15, totalCall = 20}
+                Shreya, Jr, 2/2/1988, BusinessAnalyst, {clientCall = 11, totalCall = 20}
+                Naren, Bist, 3/3/1979, BusinessAnalyst, {clientCall = 25, totalCall = 20}
+                Tim, Buchalka, 1/1/1885, CEO, {totalHours = 190}
+                """;
+
+        String employeeRegex = """
+                (?<firstName>\\w+),\\s+(?<lastName>\\w+),\\s+(?<dob>\\d/\\d/\\d{1,4}),\\s+(?<role>\\w+),\\s+\\{(?<details>.*?)\\}\\n
+                """;
+        Pattern employeePattern = Pattern.compile(employeeRegex, Pattern.DOTALL | Pattern.COMMENTS);
+        Matcher employeeMatcher = employeePattern.matcher(employeeData);
+
+        int totalSalry = 0;
+        while (employeeMatcher.find()){
+            totalSalry += switch (employeeMatcher.group("role")){
+                case "Programmer"-> {
+                    int programmerSalary = 0;
+                    System.out.println(employeeMatcher.group("details"));
+                    String programmerRegex = "\\w+\\s+=\\s+(?<hourlyPay>\\d+),\\s+\\w+\\s+=\\s+(?<totalHours>\\d+)";
+                    Pattern programmerPattern = Pattern.compile(programmerRegex);
+                    Matcher programmerMatcher = programmerPattern.matcher(employeeMatcher.group("details"));
+                    if(programmerMatcher.matches()){
+                        int hourlyPay = Integer.parseInt(programmerMatcher.group("hourlyPay"));
+                        int totalHours = Integer.parseInt(programmerMatcher.group("totalHours"));
+                        programmerSalary = hourlyPay * totalHours;
+                    }
+                    yield programmerSalary;
+                }
+                case "BusinessAnalyst" -> {
+                    int businessAnalystSalary = 0;
+                    String businessAnalystRegex = "\\w+\\s+=\\s+(?<clientCall>\\d+),\\s+\\w+\\s+=\\s+(?<totalCall>\\d+)";
+                    Pattern businessAnalystPattern = Pattern.compile(businessAnalystRegex);
+                    Matcher businessAnalystMatcher = businessAnalystPattern.matcher(employeeMatcher.group("details"));
+                    if(businessAnalystMatcher.matches()){
+                        int clientCall = Integer.parseInt(businessAnalystMatcher.group("clientCall"));
+                        int totalCall = Integer.parseInt(businessAnalystMatcher.group("totalCall"));
+                        businessAnalystSalary = clientCall * totalCall;
+                    }
+                    yield businessAnalystSalary;
+                }
+                case "CEO" -> {
+                    int ceoSalary = 0;
+                    String ceoRegex = "\\w+\\s+=\\s+(?<totalHours>\\d+)";
+                    Pattern ceoPattern = Pattern.compile(ceoRegex);
+                    Matcher ceoMatcher = ceoPattern.matcher(employeeMatcher.group("details"));
+                    if(ceoMatcher.matches()){
+                        int clientCall = Integer.parseInt(ceoMatcher.group("totalHours"));
+                        ceoSalary = 100000 * clientCall;
+                    }
+                    yield ceoSalary;
+                }
+                default -> 0;
+            };
+        }
+
+        NumberFormat currency = NumberFormat.getCurrencyInstance();
+        System.out.println(currency.format(totalSalry));
+
+    }
+
+}
